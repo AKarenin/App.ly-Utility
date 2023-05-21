@@ -1,0 +1,8 @@
+package_rename_config:
+  android:
+    app_name: App.ly Utility
+    package_name: app.ly.schoolfinal
+  ios:
+    app_name: App.ly Utility
+    bundle_name: schoolfinal
+    package_name: app.ly.schoolfinal
