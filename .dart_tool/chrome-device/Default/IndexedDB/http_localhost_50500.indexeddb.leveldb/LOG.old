@@ -1,0 +1,26 @@
+2023/03/25-11:39:01.791 6a03 Creating DB /private/var/folders/l_/fjth36j959x5yxf2b4p2z40c0000gn/T/flutter_tools.HNoXYk/flutter_tools_chrome_device.VDzV0m/Default/IndexedDB/http_localhost_50500.indexeddb.leveldb since it was missing.
+2023/03/25-11:39:01.848 6a03 Reusing MANIFEST /private/var/folders/l_/fjth36j959x5yxf2b4p2z40c0000gn/T/flutter_tools.HNoXYk/flutter_tools_chrome_device.VDzV0m/Default/IndexedDB/http_localhost_50500.indexeddb.leveldb/MANIFEST-000001
+2023/03/25-11:39:01.998 af03 Level-0 table #5: started
+2023/03/25-11:39:02.018 af03 Level-0 table #5: 1220 bytes OK
+2023/03/25-11:39:02.073 af03 Delete type=0 #3
+2023/03/25-11:39:02.074 af03 Manual compaction at level-0 from '\x00\x01\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x02\x00\x00\x00' @ 0 : 0; will stop at (end)
+2023/03/25-11:41:14.651 b007 Level-0 table #7: started
+2023/03/25-11:41:14.686 b007 Level-0 table #7: 4590 bytes OK
+2023/03/25-11:41:14.739 b007 Delete type=0 #4
+2023/03/25-11:41:14.739 6a03 Manual compaction at level-0 from '\x00\x04\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x05\x00\x00\x00' @ 0 : 0; will stop at (end)
+2023/03/25-11:41:54.711 6a03 Compacting 1@1 + 1@2 files
+2023/03/25-11:41:54.729 6a03 Generated table #8@1: 40 keys, 2934 bytes
+2023/03/25-11:41:54.729 6a03 Compacted 1@1 + 1@2 files => 2934 bytes
+2023/03/25-11:41:54.767 6a03 compacted to: files[ 0 0 1 0 0 0 0 ]
+2023/03/25-11:41:54.767 6a03 Delete type=2 #7
+2023/03/25-11:41:54.768 6a03 Delete type=2 #5
+2023/03/25-11:58:21.653 11743 Level-0 table #10: started
+2023/03/25-11:58:21.691 11743 Level-0 table #10: 3253 bytes OK
+2023/03/25-11:58:21.743 11743 Delete type=0 #6
+2023/03/25-11:58:21.744 6a03 Manual compaction at level-0 from '\x00\x05\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x06\x00\x00\x00' @ 0 : 0; will stop at (end)
+2023/03/25-11:59:00.944 6a03 Compacting 1@1 + 1@2 files
+2023/03/25-11:59:00.968 6a03 Generated table #11@1: 40 keys, 2932 bytes
+2023/03/25-11:59:00.968 6a03 Compacted 1@1 + 1@2 files => 2932 bytes
+2023/03/25-11:59:01.005 6a03 compacted to: files[ 0 0 1 0 0 0 0 ]
+2023/03/25-11:59:01.005 6a03 Delete type=2 #10
+2023/03/25-11:59:01.005 6a03 Delete type=2 #8

@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "111417705184",
+    "project_id": "sfs-utility",
+    "storage_bucket": "sfs-utility.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:111417705184:android:4aab5a61fc7447db1b8685",
+        "android_client_info": {
+          "package_name": "com.example.schoolappfinal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "111417705184-cghgqvtnmfrrsvrll80tcmtrkgf1ejru.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkve7Y8L4ImEqqBgcwuWQjND2OW_jl55E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "111417705184-cghgqvtnmfrrsvrll80tcmtrkgf1ejru.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "111417705184-228nd7ju9eba1u8scjv13brttlb7g5hf.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.schoolappfinal"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
