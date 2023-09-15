@@ -87,7 +87,7 @@ class RegisterPage extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: WidgetUtil.myTextField("SFS ID",
+                          child: WidgetUtil.myTextField("SFS ID (Email)",
                               controller: idController),
                         ),
                         SizedBox(width: 10),
