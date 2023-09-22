@@ -49,7 +49,7 @@ class LoginPage extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: WidgetUtil.myTextField("SFS ID", controller: idController),
+                          child: WidgetUtil.myTextField("SFS Email", controller: idController),
                         ),
                         SizedBox(width: 10),
                         Text(
@@ -84,7 +84,7 @@ class LoginPage extends StatelessWidget {
                     },
                     icon:
                         Icon(Icons.add_box_outlined, color: Color(0xFF002F6D)),
-                    label: Text("SIGN UP",
+                    label: Text("SIGN IN",
                         style: TextStyle(
                             color: Color(0xFF002F6D),
                             fontWeight: FontWeight.w600)),

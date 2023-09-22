@@ -36,7 +36,7 @@ class MonitorUtil {
             final reserveInfo = entry.value;
 
             DateTime now = DateTime.now();
-            //예약한지 5분이 지났는지, 베리파이가 됬는지
+            //예약한지 5분이 지났는지, 베리파이가 안됬는지
             if (reserveInfo.reservedTime
                 .add(Duration(minutes: 5))
                 .isBefore(now) && !reserveInfo.isVerified) {

@@ -21,7 +21,7 @@ class _SelectPeriodPageState extends State<SelectPeriodPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Choose a Period"),
+        title: Text("Please choose a Period"),
       ),
       body: ListView(
         children: widget.initialPeriodList
