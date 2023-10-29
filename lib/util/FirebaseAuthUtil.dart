@@ -26,6 +26,28 @@ class FirebaseAuthUtil{
       }
     }
   }
+  static Future<void> testLogin(BuildContext context, String emailID, String password) async {
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: "${emailID}", password: password);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        InteractionUtil.showSnackbar(context, "해당 유저가 없습니다.");
+      } else if (e.code == 'invalid-email') {
+        InteractionUtil.showSnackbar(context, "이메일이 형식이 잘못되었습니다");
+      } else if (e.code == 'wrong-password') {
+        InteractionUtil.showSnackbar(context, "비밀번호가 틀렸습니다");
+      } else if (e.code == 'too-many-requests') {
+        InteractionUtil.showSnackbar(context, "잠시 후에 다시 시도해주세요");
+      } else if (e.code == 'network-request-failed') {
+        InteractionUtil.showSnackbar(context, "네트워크 요청이 실패하였습니다");
+      } else if (e.code == 'internal-error') {
+        InteractionUtil.showSnackbar(context, "내부 에러가 발생하였습니다");
+      } else {
+        InteractionUtil.showSnackbar(context, "알수 없는 에러가 발생하였습니다");
+      }
+    }
+  }
 
 
   static Future<void> logout() {
@@ -39,6 +61,30 @@ class FirebaseAuthUtil{
     try {
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: "${emailID}@seoulforeign.org", password: password);
+
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        InteractionUtil.showSnackbar(context, "비밀번호 형식이 안전하지 않습니다");
+      } else if (e.code == 'email-already-in-use') {
+        InteractionUtil.showSnackbar(context, "이미 ID가 있습니다");
+      } else if (e.code == 'invalid-email') {
+        InteractionUtil.showSnackbar(context, "이메일이 형식이 잘못되었습니다");
+      } else if (e.code == 'too-many-requests') {
+        InteractionUtil.showSnackbar(context, "잠시 후에 다시 시도해주세요");
+      } else if (e.code == 'network-request-failed') {
+        InteractionUtil.showSnackbar(context, "네트워크 요청이 실패하였습니다");
+      } else if (e.code == 'internal-error') {
+        InteractionUtil.showSnackbar(context, "내부 에러가 발생하였습니다");
+      } else {
+        InteractionUtil.showSnackbar(context, "알수 없는 에러가 발생하였습니다");
+      }
+    }
+  }
+
+  static Future<void> registerForTest(BuildContext context) async{
+    try {
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: "alexdhkil@gmail.com", password: "111111");
 
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
