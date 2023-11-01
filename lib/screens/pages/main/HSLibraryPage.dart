@@ -18,6 +18,7 @@ import '../../../util/MonitorUtil.dart';
 //3. ListView.builder를 활용해서 위 리스트를 통해 위젯 리스트 만든다.
 class HSLibraryPage extends StatefulWidget {
   MonitorUtil? monitorUtil;
+
   HSLibraryPage(this.monitorUtil);
 
   @override
@@ -26,11 +27,6 @@ class HSLibraryPage extends StatefulWidget {
   }
 }
 
-//색의 의미.
-//하나의 리스트타일당 상태값(3개중 1개)을 갖어야함.
-//파란: 비어있을때 (클리가능 -> 예약 -> 초록)
-//초록: 내가 예약했을때 (클릭 가능 -> 취소 -> 파랑)
-//빨강: 남이 예약했을때 (클릭 불가능)
 class _HSLibraryPageState extends State<HSLibraryPage> {
   late List<Period> periodList;
   Map<String, ReserveInfo> reserveInfoByRoomId = {};
@@ -38,7 +34,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
 
   DateTime today = DateTime.now();
 
-  bool canReserve = true;
+  bool notYetReserved = true;
   bool isLoaded = false;
 
   @override
@@ -50,11 +46,10 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       selectedPeriod = periodList[0];
       setState(() {});
 
-      if(FirebaseAuthUtil.isAdmin(context)){
+      if (FirebaseAuthUtil.isAdmin(context)) {
         widget.monitorUtil?.run(periodList, loadPeriodAndCurrentReserveInfo);
       }
     })();
-
   }
 
   @override
@@ -118,7 +113,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
           Expanded(
             child: SizedBox(
               width: double.infinity,
-              child: myCard(),
+              child: myCard(context),
             ),
           ),
         ],
@@ -126,7 +121,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     );
   }
 
-  Widget myCard() {
+  Widget myCard(BuildContext context) {
     return Card(
       margin: const EdgeInsets.all(50),
       elevation: 10,
@@ -136,21 +131,21 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: ListView.builder(
-          itemCount: selectedPeriod?.roomList.length??0,
+          itemCount: selectedPeriod?.roomList.length ?? 0,
           itemBuilder: (c, i) {
             Room room = selectedPeriod!.roomList[i]; //룸을 1개 갖고온다.
+
+            final reserveInfo = reserveInfoByRoomId[room.id];
 
             return Card(
               elevation: 10,
               child: ListTile(
                 onTap: () {
                   //예약정보를 파이어스토어에 저장해야함.
-                  ReserveInfo? reserveInfo = reserveInfoByRoomId[room.id];
-
                   if (FirebaseAuthUtil.isAdmin(context)) {
                     adminDialog(reserveInfo, room);
                   } else {
-                    regularUserDialog(reserveInfo, room);
+                    regularUserDialog(context, reserveInfo, room);
                   }
                 },
                 leading: Text(room.name),
@@ -159,9 +154,9 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
                     height: 50,
                     width: 30,
                     color: FirebaseAuthUtil.isAdmin(context)
-                        ? adminColorByReserveInfo(reserveInfoByRoomId[room.id])
-                        : regularColorByReserveInfo(
-                            reserveInfoByRoomId[room.id])),
+                        ? adminColorByReserveInfo(reserveInfo)
+                        : regularColorByReserveStatus(
+                            reserveInfo?.returnStatus(context))),
               ),
             );
           },
@@ -175,18 +170,18 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     setState(() {});
 
     periodList = await PeriodRepository.getList('index', isNull: false);
-    if (selectedPeriod == null && periodList.isNotEmpty){
+    if (selectedPeriod == null && periodList.isNotEmpty) {
       selectedPeriod = periodList[0];
     }
 
-    reserveInfoByRoomId = await ReservationService.me.getReserveInfosByPeriod(selectedPeriod);
+    reserveInfoByRoomId =
+        await ReservationService.me.getReserveInfosByPeriod(selectedPeriod);
 
-
-    canReserve = true;
+    notYetReserved = true;
     for (final reserveInfo in reserveInfoByRoomId.values) {
       if (reserveInfo.reservedEmail ==
           FirebaseAuthUtil.currentUser(context)?.email) {
-        canReserve = false;
+        notYetReserved = false;
       }
     }
 
@@ -194,21 +189,18 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     setState(() {});
   }
 
-  Color regularColorByReserveInfo(ReserveInfo? reserveInfo) {
-    if (reserveInfo == null) {
+  Color regularColorByReserveStatus(ReserveStatus? reserveStatus) {
+    if (reserveStatus == null) {
       return Colors.blue;
     }
-
-    if (reserveInfo.isReserved) {
-      if (reserveInfo.reservedEmail ==
-          FirebaseAuthUtil.currentUser(context)?.email) {
-        return Colors.green;
-      }
-
-      return Colors.red;
+    if (reserveStatus == ReserveStatus.REQUEST) {
+      return Colors.yellow;
+    }
+    if (reserveStatus == ReserveStatus.VERIFIED) {
+      return Colors.green;
     }
 
-    return Colors.blue;
+    return Colors.red;
   }
 
   Color adminColorByReserveInfo(ReserveInfo? reserveInfo) {
@@ -227,24 +219,30 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
   }
 
   void regularUserDialog(
+    BuildContext context,
     ReserveInfo? reserveInfo,
     Room room,
   ) {
-    if (!(reserveInfo?.isReserved ?? false) && canReserve) {
-      reserveInfoByRoomId;
+    ReserveStatus? status = reserveInfo?.returnStatus(context);
+
+    //액션별로 생각하보기
+    //예약 (예약한적이 없고, VACANT일때
+    //예약취소 ( Request일때)
+
+    if (notYetReserved && status == null) {
       MyAlertDialog.show(context, title: Text("Do you want to book this room?"),
           okWork: () async {
         isLoaded = false;
         setState(() {});
 
         await ReserveInfoRepository.create(ReserveInfo(
-            room.id,
-            FirebaseAuthUtil.currentUser(context)?.email,
-            selectedPeriod!.index,
-            true,
-            today,
-            false,
-            DateTime.now(),
+          room.id,
+          FirebaseAuthUtil.currentUser(context)?.email,
+          selectedPeriod!.index,
+          true,
+          today,
+          false,
+          DateTime.now(),
         ));
 
         isLoaded = true;
@@ -260,8 +258,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
 
         //안되었으면,
       });
-    } else if (reserveInfo?.reservedEmail ==
-        FirebaseAuthUtil.currentUser(context)?.email) {
+    } else if (status == ReserveStatus.REQUEST) {
       MyAlertDialog.show(context,
           title: Text("Do you want to unbook this room?"), okWork: () async {
         await ReserveInfoRepository.delete(documentId: reserveInfo!.documentId);
@@ -269,6 +266,8 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       });
     } else {
       InteractionUtil.showSnackbar(context, "You can not perform this action");
+      print(notYetReserved);
+      print(status);
     }
   }
 

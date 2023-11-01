@@ -24,3 +24,16 @@ Pub Dev : 다트에서 라이브러리를 관리할 때 필요한 프로그램# 
 - Period 5분전에만 예약할수 있게 해달라
 - 한국어 좀 영어로 고쳐달라
 
+예약 상태
+1.예약안함(파랑)/ isReserved:false, isVerified:false
+2.예약요청(노랑)/ isReserved: true, isVerified: false, reservedUser == currentUser
+3-1.예약승인됨(초록)/ isReserved: true, isVerified: true, reservedUser == currentUser
+3-2.이미예약됨(빨강)/ isReserved: true, isVerified: 상관없음, reservedUser != currentUser
+
+
+"isReserved": isReserved, //예약 요청
+"isVerified": isVerified, //예약 승인
+
+
+
+

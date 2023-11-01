@@ -16,12 +16,22 @@ class TestLoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ElevatedButton(
-        child: Text("Test Login"),
-        onPressed: (){
-          FirebaseAuthUtil.testLogin(context, "alexdhkil@gmail.com", "111111");
-          PageUtil.replace(context, MainLayout());
-        },
+      body: Column(
+        children: [
+          ElevatedButton(
+            child: Text("Test Login"),
+            onPressed: (){
+              FirebaseAuthUtil.testLogin(context, "alexdhkil@gmail.com", "111111");
+              PageUtil.replace(context, MainLayout());
+            },
+          ),ElevatedButton(
+            child: Text("Test Login 2"),
+            onPressed: (){
+              FirebaseAuthUtil.testLogin(context, "assasinbob3@gmail.com", "111111");
+              PageUtil.replace(context, MainLayout());
+            },
+          ),
+        ],
       ),
     );
   }
