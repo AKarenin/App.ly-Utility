@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:schoolappfinal/screens/pages/auth/LoginPage.dart';
+import 'package:schoolappfinal/screens/pages/auth/SsoPage.dart';
 import 'package:schoolappfinal/screens/widgets/GradationColorWidget.dart';
 import 'package:schoolappfinal/util/FirebaseAuthUtil.dart';
 import 'package:schoolappfinal/util/InteractionUtil.dart';
@@ -91,7 +92,7 @@ class AccountPage extends StatelessWidget {
               child: ListTile(
                 onTap: () {
                   FirebaseAuthUtil.logout();
-                  PageUtil.replace(context, LoginPage());
+                  PageUtil.replace(context, SsoPage());
                 },
                 leading: Icon(
                   Icons.change_circle,
@@ -112,7 +113,7 @@ class AccountPage extends StatelessWidget {
               child: ListTile(
                 onTap: () {
                   FirebaseAuthUtil.delete(context);
-                  PageUtil.replace(context, LoginPage());
+                  PageUtil.replace(context, SsoPage());
                 },
                 leading: Icon(
                   Icons.delete,

@@ -34,7 +34,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
 
   DateTime today = DateTime.now();
 
-  bool notYetReserved = true;
+  bool canReserve = true;
   bool isLoaded = false;
 
   @override
@@ -177,11 +177,11 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     reserveInfoByRoomId =
         await ReservationService.me.getReserveInfosByPeriod(selectedPeriod);
 
-    notYetReserved = true;
+    canReserve = true;
     for (final reserveInfo in reserveInfoByRoomId.values) {
       if (reserveInfo.reservedEmail ==
           FirebaseAuthUtil.currentUser(context)?.email) {
-        notYetReserved = false;
+        canReserve = false;
       }
     }
 
@@ -229,8 +229,25 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     //예약 (예약한적이 없고, VACANT일때
     //예약취소 ( Request일때)
 
-    if (notYetReserved && status == null) {
-      MyAlertDialog.show(context, title: Text("Do you want to book this room?"),
+    if (canReserve && status == null) {
+      final now = DateTime.now();
+      //해당 방에 점유 시작 시간. - 5분. => 기준 시간
+      //기준 시간을 현재시간이 넘었니?
+      final timeOfDay = selectedPeriod!.startTime;
+      final startDateTime = now.copyWith(
+        hour: timeOfDay.hour,
+        minute: timeOfDay.minute,
+        second: 0,
+      );
+      final standardDateTime =
+          startDateTime.subtract(const Duration(minutes: 5));
+      if (!standardDateTime.isBefore(now)) {
+        InteractionUtil.showSnackbar(context, "Please wait until 5 minutes before the period to book.");
+        return;
+      }
+
+      MyAlertDialog.show(context,
+          title: const Text("Do you want to book this room?"),
           okWork: () async {
         isLoaded = false;
         setState(() {});
@@ -260,13 +277,14 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       });
     } else if (status == ReserveStatus.REQUEST) {
       MyAlertDialog.show(context,
-          title: Text("Do you want to unbook this room?"), okWork: () async {
+          title: const Text("Do you want to unbook this room?"),
+          okWork: () async {
         await ReserveInfoRepository.delete(documentId: reserveInfo!.documentId);
         await loadPeriodAndCurrentReserveInfo();
       });
     } else {
       InteractionUtil.showSnackbar(context, "You can not perform this action");
-      print(notYetReserved);
+      print(canReserve);
       print(status);
     }
   }
@@ -280,7 +298,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text("Reserver: ${reserveInfo!.reservedEmail}"),
-              Text("Is the reserver present?")
+              const Text("Is the reserver present?")
             ],
           ), okWork: () async {
         isLoaded = false;

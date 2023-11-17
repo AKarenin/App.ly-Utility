@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:schoolappfinal/screens/layouts/MainLayout.dart';
 import 'package:schoolappfinal/screens/pages/auth/LoginPage.dart';
+import 'package:schoolappfinal/screens/pages/auth/SsoPage.dart';
 import 'package:schoolappfinal/util/PageUtil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -23,7 +24,7 @@ class SplashPage extends StatelessWidget {
       PageUtil.replace(context!, MainLayout());
     }
     else {
-      PageUtil.replace(context!, LoginPage());
+      PageUtil.replace(context!, SsoPage());
     }
   }
 
