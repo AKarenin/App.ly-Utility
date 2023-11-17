@@ -60,11 +60,11 @@ class SsoPage extends StatelessWidget {
                             text: "Sign up with Google",
                             onPressed: () async {
                               try {
-                                await AuthService.signInWithGoogle(context);
+                                await AuthService.signInWithGoogle(context, suffix:'@seoulforeign.org');
                                 PageUtil.replace(context, MainLayout());
                               }
-                              catch(e) {
-                                print(e);
+                              on String catch(value)  {
+                                InteractionUtil.showSnackbar(context, value);
                               }
                             },
                           ),
