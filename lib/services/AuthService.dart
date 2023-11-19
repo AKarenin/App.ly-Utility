@@ -11,7 +11,7 @@ class AuthService {
       {required String suffix}) async {
     final googleUser = await GoogleSignIn().signIn(); //cancel -> null
     if (googleUser == null) {
-      return;
+      throw "Please select a valid Email";
     }
 
     if (!googleUser.email.endsWith(suffix)) {
