@@ -32,11 +32,12 @@ Pub Dev : 다트에서 라이브러리를 관리할 때 필요한 프로그램# 
 2.예약요청(노랑)/ isReserved: true, isVerified: false, reservedUser == currentUser
 3-1.예약승인됨(초록)/ isReserved: true, isVerified: true, reservedUser == currentUser
 3-2.이미예약됨(빨강)/ isReserved: true, isVerified: 상관없음, reservedUser != currentUser
-
+4. ㅇㅖ
 
 "isReserved": isReserved, //예약 요청
 "isVerified": isVerified, //예약 승인
 
+-----
 
 
 

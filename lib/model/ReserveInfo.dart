@@ -11,10 +11,12 @@ enum ReserveStatus{
 2.예약요청(노랑)/ isReserved: true, isVerified: false, reservedUser == currentUser
 3-1.예약승인됨(초록)/ isReserved: true, isVerified: true, reservedUser == currentUser
 3-2.이미예약됨(빨강)/ isReserved: true, isVerified: 상관없음, reservedUser != currentUser
+4. 예약닫기/isClosed: true
    */
   REQUEST,
   VERIFIED,
   TAKEN,
+  CLOSED,
 }
 
 //reservedEmail(String): 누가 예약했는지
@@ -29,10 +31,12 @@ class ReserveInfo {
   bool isReserved;
   DateTime roomDate;
   bool isVerified;
+  bool isClosed;
   DateTime reservedTime;
 
   ReserveInfo(this.roomId, this.reservedEmail, this.periodIndex,
-      this.isReserved, this.roomDate, this.isVerified, this.reservedTime);
+      this.isReserved, this.roomDate, this.isVerified, this.reservedTime,
+      {this.isClosed = false});
 
   factory ReserveInfo.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -47,6 +51,7 @@ class ReserveInfo {
       DateTime.parse(data?['roomDate']),
       data?['isVerified'],
       DateTime.parse(data?['reservedTime']),
+      isClosed: data?['isClosed']??false,
     )..documentId = data?['documentId'];
   }
 
@@ -58,12 +63,17 @@ class ReserveInfo {
       "reservedEmail": reservedEmail,
       "isReserved": isReserved, //예약 요청
       "isVerified": isVerified, //예약 승인
+      "isClosed": isClosed,
       "roomDate": DateUtils.dateOnly(roomDate).toIso8601String(), //시간 개념은 없애야함.
       "reservedTime": reservedTime.toIso8601String(),
     };
   }
 
   ReserveStatus? returnStatus(BuildContext context){
+    if(isClosed){
+      return ReserveStatus.CLOSED;
+    }
+
     if(!isReserved){
       return null;
     }

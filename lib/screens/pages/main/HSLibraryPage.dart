@@ -41,7 +41,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
   void initState() {
     super.initState();
 
-    (() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       await loadPeriodAndCurrentReserveInfo();
       selectedPeriod = periodList[0];
       setState(() {});
@@ -49,7 +49,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       if (FirebaseAuthUtil.isAdmin(context)) {
         widget.monitorUtil?.run(periodList, loadPeriodAndCurrentReserveInfo);
       }
-    })();
+    });
   }
 
   @override
@@ -137,26 +137,42 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
 
             final reserveInfo = reserveInfoByRoomId[room.id];
 
+            final status = reserveInfo?.returnStatus(context);
+            print('status: ${status}');
             return Card(
               elevation: 10,
               child: ListTile(
                 onTap: () {
                   //예약정보를 파이어스토어에 저장해야함.
                   if (FirebaseAuthUtil.isAdmin(context)) {
-                    adminDialog(reserveInfo, room);
+                    showAdminDialog(reserveInfo, room);
                   } else {
-                    regularUserDialog(context, reserveInfo, room);
+                    showRegularUserDialog(context, reserveInfo, room);
                   }
                 },
-                leading: Text(room.name),
-                title: Text("${room.nOfSeat} Seats"),
+                onLongPress: () {
+                  if (FirebaseAuthUtil.isAdmin(context)) {
+                    showClosedDialog(reserveInfo, room);
+                  }
+                },
+                //bool ? value(when true) : value(when false)
+                leading: Text(
+                  room.name,
+                  style: TextStyle(
+                      decoration: status == ReserveStatus.CLOSED
+                          ? TextDecoration.lineThrough
+                          : null),
+                ),
+                title: Text("${room.nOfSeat} Seats", style: TextStyle(
+                    decoration: status == ReserveStatus.CLOSED
+                        ? TextDecoration.lineThrough
+                        : null),),
                 trailing: Container(
                     height: 50,
                     width: 30,
                     color: FirebaseAuthUtil.isAdmin(context)
                         ? adminColorByReserveInfo(reserveInfo)
-                        : regularColorByReserveStatus(
-                            reserveInfo?.returnStatus(context))),
+                        : regularColorByReserveStatus(status)),
               ),
             );
           },
@@ -190,6 +206,9 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
   }
 
   Color regularColorByReserveStatus(ReserveStatus? reserveStatus) {
+    if (reserveStatus == ReserveStatus.CLOSED) {
+      return Colors.white;
+    }
     if (reserveStatus == null) {
       return Colors.blue;
     }
@@ -208,6 +227,10 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       return Colors.blue;
     }
 
+    if (reserveInfo.isClosed == true) {
+      return Colors.white;
+    }
+
     if (reserveInfo.isReserved) {
       if (reserveInfo.isVerified) {
         return Colors.green;
@@ -218,7 +241,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     return Colors.blue;
   }
 
-  void regularUserDialog(
+  void showRegularUserDialog(
     BuildContext context,
     ReserveInfo? reserveInfo,
     Room room,
@@ -228,6 +251,10 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     //액션별로 생각하보기
     //예약 (예약한적이 없고, VACANT일때
     //예약취소 ( Request일때)
+    if (status == ReserveStatus.CLOSED) {
+      InteractionUtil.showSnackbar(context, "This room is  closed");
+      return;
+    }
 
     if (canReserve && status == null) {
       final now = DateTime.now();
@@ -242,7 +269,8 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       final standardDateTime =
           startDateTime.subtract(const Duration(minutes: 5));
       if (!standardDateTime.isBefore(now)) {
-        InteractionUtil.showSnackbar(context, "Please wait until 5 minutes before the period to book.");
+        InteractionUtil.showSnackbar(
+            context, "Please wait until 5 minutes before the period to book.");
         return;
       }
 
@@ -289,9 +317,14 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     }
   }
 
-  void adminDialog(ReserveInfo? reserveInfo, Room room) {
+  void showAdminDialog(ReserveInfo? reserveInfo, Room room) {
     //이미 검증 |노 예약 | 예약 but no 검증
-    if ((reserveInfo?.isReserved ?? false) && !reserveInfo!.isVerified) {
+    if (reserveInfo?.isClosed == true) {
+      MyAlertDialog.show(context,
+          title: Text("Do you want to unclose this room?"), okWork: () async {
+        setClosed(reserveInfo, false);
+      });
+    } else if ((reserveInfo?.isReserved ?? false) && !reserveInfo!.isVerified) {
       reserveInfoByRoomId;
       MyAlertDialog.show(context,
           title: Column(
@@ -325,5 +358,47 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     } else {
       InteractionUtil.showSnackbar(context, "There is no reserver");
     }
+  }
+
+  void showClosedDialog(ReserveInfo? reserveInfo, Room room) {
+    MyAlertDialog.show(context, title: const Text("Close this room?"),
+        okWork: () async {
+      if (reserveInfo == null) {
+        reserveInfo = ReserveInfo(
+          room.id,
+          FirebaseAuthUtil.currentUser(context)?.email,
+          selectedPeriod!.index,
+          false,
+          today,
+          false,
+          DateTime.now(),
+        );
+        await ReserveInfoRepository.create(reserveInfo!);
+      }
+      setClosed(reserveInfo, true);
+    });
+  }
+
+  void setClosed(ReserveInfo? reserveInfo, bool isClosed) async {
+    if (reserveInfo == null) return;
+
+    isLoaded = false;
+    setState(() {});
+
+    reserveInfo.isClosed = isClosed;
+    await ReserveInfoRepository.update(reserveInfo);
+
+    isLoaded = true;
+    setState(() {});
+
+    loadPeriodAndCurrentReserveInfo();
+    //예약 상태 (색)
+    //안했다. !room.isReserved
+    //안했다. !room.isReserved
+    //했다.room.isReserved && 누구누구가 했다, 내가 했다
+
+    //일단 예약 이미 되었는지 확인
+
+    //안되었으면,
   }
 }

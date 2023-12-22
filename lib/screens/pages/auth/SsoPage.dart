@@ -17,66 +17,80 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../util/WidgetUtil.dart';
 
 class SsoPage extends StatelessWidget {
+
   SsoPage({Key? key}) : super(key: key);
 
+  String inputKeyword="";
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          SizedBox.expand(
-              child: Image.asset("assets/images/SplashPage.jpg",
-                  fit: BoxFit.fill)),
-          SizedBox(
-            width: double.infinity,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 30, right: 30),
-                  child: Card(
-                    child: Container(
-                      width: 500,
-                      padding: EdgeInsets.all(40),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(50),
-                        color: Colors.white,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            "Sign In With Your SFS Account",
-                            style: TextStyle(
-                              fontSize: 35,
-                              color: Color(0xFF002F6D),
-                              fontWeight: FontWeight.w600,
+      body: KeyboardListener(
+        autofocus: true,
+        focusNode: FocusNode(),
+        onKeyEvent: (KeyEvent keyEvent) {
+          inputKeyword += keyEvent.character ?? '';
+          print('inputKeyword: $inputKeyword');
+          if (inputKeyword.contains('!qwerty!')) {
+            //TestLoginPage로 변경.
+            PageUtil.replace(context, TestLoginPage());
+          }
+        },
+        child: Stack(
+          children: [
+            SizedBox.expand(
+                child: Image.asset("assets/images/SplashPage.jpg",
+                    fit: BoxFit.fill)),
+            SizedBox(
+              width: double.infinity,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 30, right: 30),
+                    child: Card(
+                      child: Container(
+                        width: 500,
+                        padding: EdgeInsets.all(40),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(50),
+                          color: Colors.white,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "Sign In With Your SFS Account",
+                              style: TextStyle(
+                                fontSize: 35,
+                                color: Color(0xFF002F6D),
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 40),
-                          SignInButton(
-                            Buttons.Google,
-                            text: "Sign up with Google",
-                            onPressed: () async {
-                              try {
-                                await AuthService.signInWithGoogle(context, suffix:'@seoulforeign.org');
-                                PageUtil.replace(context, MainLayout());
-                              }
-                              on String catch(value)  {
-                                InteractionUtil.showSnackbar(context, value);
-                              }
-                            },
-                          ),
-                        ],
+                            SizedBox(height: 40),
+                            SignInButton(
+                              Buttons.Google,
+                              text: "Sign up with Google",
+                              onPressed: () async {
+                                try {
+                                  await AuthService.signInWithGoogle(context, suffix:'@seoulforeign.org');
+                                  PageUtil.replace(context, MainLayout());
+                                }
+                                on String catch(value)  {
+                                  InteractionUtil.showSnackbar(context, value);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

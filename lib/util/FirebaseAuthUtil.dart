@@ -174,6 +174,6 @@ class FirebaseAuthUtil{
   static bool isAdmin(BuildContext context) {
     return FirebaseAuthUtil.currentUser(context)?.email ==
         "alex.kil.25@seoulforeign.org"||FirebaseAuthUtil.currentUser(context)?.email ==
-        "lauren.elliott@seoulforeign.org";
+        "lauren.elliott@seoulforeign.org"||FirebaseAuthUtil.currentUser(context)?.email == "angie.won@seoulforeign.org";
   }
 }
