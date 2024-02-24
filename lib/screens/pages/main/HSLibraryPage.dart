@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icon.dart';
 import 'package:schoolappfinal/dbs/PeriodRepository.dart';
@@ -37,6 +40,9 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
   bool canReserve = true;
   bool isLoaded = false;
 
+  StreamSubscription<QuerySnapshot<ReserveInfo>>? subscription;
+
+  //페이지 시작할때 실행하는 함수.
   @override
   void initState() {
     super.initState();
@@ -49,8 +55,41 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       if (FirebaseAuthUtil.isAdmin(context)) {
         widget.monitorUtil?.run(periodList, loadPeriodAndCurrentReserveInfo);
       }
+
+      //구독할게(파이어스토어한테, 나 서버의 변경사항에 관심 있어.)
+      final query = ReserveInfoRepository.where('roomDate', isEqualTo: DateUtils.dateOnly(DateTime.now()).toIso8601String());
+      // final snapshot = await query.get();
+      // final reserveInfoList = snapshot.docs.map((e) => e.data()).toList();
+      // print('reserveInfoList : $reserveInfoList');
+      subscription = await ReserveInfoRepository.queryListen(query, (event) {
+        for(final documentChange in event.docChanges) {
+          final reserveInfo = documentChange.doc.data();
+          if(reserveInfo == null) continue;
+          if(selectedPeriod == null) continue;
+          if(reserveInfo.periodIndex!=selectedPeriod!.index) continue;
+
+          final changeType = documentChange.type;
+          if(changeType==DocumentChangeType.added || changeType==DocumentChangeType.modified) {
+            reserveInfoByRoomId[reserveInfo.roomId] = reserveInfo;
+          }
+          else if(changeType==DocumentChangeType.removed) {
+            reserveInfoByRoomId.remove(reserveInfo.roomId);
+          }
+        }
+        setState(() { });
+      });
     });
   }
+
+  //페이지 끝날때 실행하는 함수
+  @override
+  void dispose() {
+    super.dispose();
+    //구독해제할게(나 서버에 관심 없어.)
+    subscription?.cancel();
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -325,7 +364,6 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
         setClosed(reserveInfo, false);
       });
     } else if ((reserveInfo?.isReserved ?? false) && !reserveInfo!.isVerified) {
-      reserveInfoByRoomId;
       MyAlertDialog.show(context,
           title: Column(
             mainAxisSize: MainAxisSize.min,

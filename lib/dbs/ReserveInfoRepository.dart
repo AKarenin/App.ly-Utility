@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:schoolappfinal/model/Period.dart';
 
@@ -86,5 +88,17 @@ class ReserveInfoRepository {
         queryDocumentSnapshotList.map((e) => e.data()).toList();
 
     return reserveInfoList;
+  }
+
+  static Future<StreamSubscription<DocumentSnapshot<ReserveInfo>>> docListen(
+      DocumentReference<ReserveInfo> doc,
+      void Function(DocumentSnapshot<ReserveInfo> event) onListen) async {
+    return doc.snapshots().listen(onListen); //1개(ReserveInfo)
+  }
+
+  static Future<StreamSubscription<QuerySnapshot<ReserveInfo>>> queryListen(
+      Query<ReserveInfo> query,
+      void Function(QuerySnapshot<ReserveInfo> event) onListen) async {
+    return query.snapshots().listen(onListen); //n개(List(ReserveInfo))
   }
 }
