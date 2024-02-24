@@ -69,7 +69,7 @@ class ReserveInfo {
     };
   }
 
-  ReserveStatus? returnStatus(BuildContext context){
+  ReserveStatus? returnUserStatus(String email){
     if(isClosed){
       return ReserveStatus.CLOSED;
     }
@@ -78,7 +78,7 @@ class ReserveInfo {
       return null;
     }
 
-    if(reservedEmail==FirebaseAuthUtil.currentUser(context)!.email)  {
+    if(reservedEmail==email)  {
       if(isVerified) {
         return ReserveStatus.VERIFIED;
       } else {
@@ -87,6 +87,22 @@ class ReserveInfo {
     }
 
     return ReserveStatus.TAKEN;
+  }
+
+  ReserveStatus? returnAdminStatus(){
+    if(isClosed){
+      return ReserveStatus.CLOSED;
+    }
+
+    if(!isReserved){
+      return null;
+    }
+    if(isVerified) {
+      return ReserveStatus.VERIFIED;
+    }
+    else {
+        return ReserveStatus.REQUEST;
+    }
   }
 
 

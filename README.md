@@ -1,5 +1,5 @@
 # Command
-패키지명 변경 : flutter pub run change_app_package_name:main app.ly.schoolfinal
+패키지명(앱번들명) 변경 : flutter pub run change_app_package_name:main app.ly.schoolfinal
 앱이름 변경 : flutter pub run rename_app:main all="App.ly Utility"
 
 안드로이드 빌드 명령어

@@ -34,12 +34,13 @@ class MonitorUtil {
           for (final entry in reserveInfoByRoomId.entries) {
             String roomId = entry.key;
             final reserveInfo = entry.value;
+            final reserveStatus = reserveInfo.returnAdminStatus();
 
             DateTime now = DateTime.now();
             //예약한지 5분이 지났는지, 베리파이가 안됬는지
             if (reserveInfo.reservedTime
                 .add(Duration(minutes: 5))
-                .isBefore(now) && !reserveInfo.isVerified) {
+                .isBefore(now) && reserveStatus == ReserveStatus.REQUEST) {
               print('cancel reserveInfo: ${reserveInfo.toFirestore()}');
               String blackEmail = reserveInfo.reservedEmail!;
 

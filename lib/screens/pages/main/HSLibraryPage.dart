@@ -137,7 +137,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
 
             final reserveInfo = reserveInfoByRoomId[room.id];
 
-            final status = reserveInfo?.returnStatus(context);
+            final status = reserveInfo?.returnUserStatus(FirebaseAuthUtil.currentUser(context)?.email??"");
             print('status: ${status}');
             return Card(
               elevation: 10,
@@ -246,7 +246,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     ReserveInfo? reserveInfo,
     Room room,
   ) {
-    ReserveStatus? status = reserveInfo?.returnStatus(context);
+    ReserveStatus? status = reserveInfo?.returnUserStatus(FirebaseAuthUtil.currentUser(context)?.email??"");
 
     //액션별로 생각하보기
     //예약 (예약한적이 없고, VACANT일때
