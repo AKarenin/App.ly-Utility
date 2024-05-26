@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:schoolappfinal/screens/pages/main/HSLibraryPage.dart';
 import 'package:schoolappfinal/util/FirebaseAuthUtil.dart';
-import 'package:schoolappfinal/util/MonitorUtil.dart';
+import 'package:schoolappfinal/util/PublicMonitorUtil.dart';
 
 import '../pages/main/AccountPage.dart';
 import '../pages/main/CravePage.dart';
@@ -16,7 +16,7 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
-  MonitorUtil? monitorUtil;
+  PublicMonitorUtil? monitorUtil;
   late List<Widget> mainPageList;
   int selectedBottomIndex = 1;
   final pageController = PageController(
@@ -26,7 +26,7 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   void initState() {
     super.initState();
-    monitorUtil ??= MonitorUtil();
+    monitorUtil ??= PublicMonitorUtil();
     mainPageList = [
       AccountPage(monitorUtil),
       HSLibraryPage(monitorUtil),

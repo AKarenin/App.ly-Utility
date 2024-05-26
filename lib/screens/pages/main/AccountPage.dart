@@ -5,7 +5,7 @@ import 'package:schoolappfinal/screens/pages/auth/SsoPage.dart';
 import 'package:schoolappfinal/screens/widgets/GradationColorWidget.dart';
 import 'package:schoolappfinal/util/FirebaseAuthUtil.dart';
 import 'package:schoolappfinal/util/InteractionUtil.dart';
-import 'package:schoolappfinal/util/MonitorUtil.dart';
+import 'package:schoolappfinal/util/PublicMonitorUtil.dart';
 import 'package:schoolappfinal/util/PageUtil.dart';
 
 import '../../widgets/ProfileImage.dart';
@@ -13,7 +13,7 @@ import '../../widgets/ProfileImage.dart';
 //3월 말까지만들어야함 (사용자앱(크레이브 2개, 계쩡 페이지 2개), 관리자 앱(페이지가 3개)) -> 출시(1주일 안쪽)
 
 class AccountPage extends StatelessWidget {
-  MonitorUtil? monitorUtil;
+  PublicMonitorUtil? monitorUtil;
   AccountPage(this.monitorUtil, {Key? key}) : super(key: key);
 
   //DateTime selectedDateTime = DateTime.now();

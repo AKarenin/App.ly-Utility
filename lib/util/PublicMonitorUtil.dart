@@ -1,6 +1,5 @@
 import 'package:cron/cron.dart';
 import 'package:schoolappfinal/dbs/BlackUserRepository.dart';
-import 'package:schoolappfinal/dbs/PeriodRepository.dart';
 import 'package:schoolappfinal/dbs/ReservedInfoRepository.dart';
 import 'package:schoolappfinal/model/Period.dart';
 import 'package:schoolappfinal/model/ReservedInfo.dart';
@@ -8,7 +7,7 @@ import 'package:schoolappfinal/services/ReservationService.dart';
 
 import '../model/BlackUser.dart';
 
-class MonitorUtil {
+class PublicMonitorUtil {
   late List<ScheduledTask> scheduleList;
   bool isInitialized = false;
 
@@ -28,30 +27,29 @@ class MonitorUtil {
         () async {
           print("Monitor");
 
-          Map<String, ReserveInfo> reserveInfoByRoomId =
+          Map<String, ReservedInfo> reserveInfoByRoomId =
               await ReservationService.me.getReserveInfosByPeriod(period);
 
           for (final entry in reserveInfoByRoomId.entries) {
             String roomId = entry.key;
             final reserveInfo = entry.value;
-            final reserveStatus = reserveInfo.returnAdminStatus();
+            final reserveStatus = reserveInfo.reserveStatus;
 
             DateTime now = DateTime.now();
             //예약한지 5분이 지났는지, 베리파이가 안됬는지
             if (reserveInfo.reservedTime
-                .add(Duration(minutes: 5))
+                .add(const Duration(minutes: 5))
                 .isBefore(now) && reserveStatus == ReserveStatus.REQUEST) {
-              print('cancel reserveInfo: ${reserveInfo.toFirestore()}');
-              String blackEmail = reserveInfo.reservedEmail!;
+              reserveInfo.reserveStatus = ReserveStatus.ELAPSED;
+              await ReservedInfoRepository.update(reserveInfo);
 
-              //예약여부를 캔슬(리저브인포를 삭제)
-              await ReserveInfoRepository.delete(
-                  documentId: reserveInfo.documentId);
+              //update
               try {
                 setState();
               } catch (ignored) {}
 
               // 블랙리스트 저장소에 넣음.
+              String blackEmail = reserveInfo.reservedEmail!;
               BlackUser blackUser = BlackUser(blackEmail, DateTime.now());
               BlackUserRepository.create(blackUser);
             }

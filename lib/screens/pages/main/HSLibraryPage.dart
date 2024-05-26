@@ -15,13 +15,13 @@ import 'package:schoolappfinal/util/FirebaseAuthUtil.dart';
 import 'package:schoolappfinal/util/InteractionUtil.dart';
 
 import '../../../model/ReservedInfo.dart';
-import '../../../util/MonitorUtil.dart';
+import '../../../util/PublicMonitorUtil.dart';
 
 //[O] 1. 방을 설계. (class)
 //[O] 2. 방 인스턴스 리스트를 채워봄.
 //3. ListView.builder를 활용해서 위 리스트를 통해 위젯 리스트 만든다.
 class HSLibraryPage extends StatefulWidget {
-  MonitorUtil? monitorUtil;
+  PublicMonitorUtil? monitorUtil;
 
   HSLibraryPage(this.monitorUtil);
 
@@ -53,7 +53,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       selectedPeriod = periodList[0];
       setState(() {});
 
-      if (FirebaseAuthUtil.isAdmin(context)) {
+      if (FirebaseAuthUtil.isPublic(context)) {
         widget.monitorUtil?.run(periodList, loadPeriodAndCurrentReservedInfo);
       }
 
@@ -217,7 +217,6 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     );
   }
 
-  ///load
   Future<void> loadPeriodAndCurrentReservedInfo() async {
     isLoaded = false;
     setState(() {});
@@ -241,8 +240,6 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     isLoaded = true;
     setState(() {});
   }
-
-  ///admin
   void setClosedByAdmin(ReservedInfo? reserveInfo, bool isClosed) async {
     if (reserveInfo == null) return;
 
