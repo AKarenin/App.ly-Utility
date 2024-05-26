@@ -1,9 +1,9 @@
 import 'package:cron/cron.dart';
 import 'package:schoolappfinal/dbs/BlackUserRepository.dart';
 import 'package:schoolappfinal/dbs/PeriodRepository.dart';
-import 'package:schoolappfinal/dbs/ReserveInfoRepository.dart';
+import 'package:schoolappfinal/dbs/ReservedInfoRepository.dart';
 import 'package:schoolappfinal/model/Period.dart';
-import 'package:schoolappfinal/model/ReserveInfo.dart';
+import 'package:schoolappfinal/model/ReservedInfo.dart';
 import 'package:schoolappfinal/services/ReservationService.dart';
 
 import '../model/BlackUser.dart';
@@ -21,7 +21,7 @@ class MonitorUtil {
     scheduleList = [];
     final cron = Cron();
     for (var period in periodList) {
-      //Peroid 의 시작시간에 감시를 시작해서, 1분마다 아래 내용을 확인해라.
+      //Period 의 시작시간에 감시를 시작해서, 1분마다 아래 내용을 확인해라.
       final schedule = cron.schedule(
         Schedule.parse(
             '0 */1 ${period.startTime.hour}-${period.startTime.hour + 1} * * 1-5'),

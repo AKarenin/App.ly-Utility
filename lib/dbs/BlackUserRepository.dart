@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:schoolappfinal/model/Period.dart';
 
 import '../model/BlackUser.dart';
-import '../model/ReserveInfo.dart';
 
 class BlackUserRepository {
   static const collectionName = "BlackUser";

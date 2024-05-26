@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:schoolappfinal/dbs/PeriodRepository.dart';
-import 'package:schoolappfinal/dbs/ReserveInfoRepository.dart';
+import 'package:schoolappfinal/dbs/ReservedInfoRepository.dart';
 import 'package:schoolappfinal/model/Period.dart';
-import 'package:schoolappfinal/model/ReserveInfo.dart';
+import 'package:schoolappfinal/model/ReservedInfo.dart';
 class ReservationService {
   static final ReservationService me = ReservationService();
 
-  Future<Map<String, ReserveInfo>> getReserveInfosByPeriod(Period? selectedPeriod) async {
+  Future<Map<String, ReservedInfo>> getReserveInfosByPeriod(Period? selectedPeriod) async {
 
     DateTime today = DateTime.now();
-    Map<String, ReserveInfo> reserveInfoByRoomId = {};
+    Map<String, ReservedInfo> reserveInfoByRoomId = {};
     for (final room in (selectedPeriod?.roomList ?? [])) {
-      final reserveList = (await ReserveInfoRepository.getList(
-        ReserveInfoRepository.where('roomId', isEqualTo: room.id).where(
+      final reserveList = (await ReservedInfoRepository.getList(
+        ReservedInfoRepository.where('roomId', isEqualTo: room.id).where(
             'roomDate',
             isEqualTo: DateUtils.dateOnly(today).toIso8601String()),
       ));

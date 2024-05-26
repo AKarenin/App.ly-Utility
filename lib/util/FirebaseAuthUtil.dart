@@ -176,4 +176,8 @@ class FirebaseAuthUtil{
         "alex.kil.25@seoulforeign.org"||FirebaseAuthUtil.currentUser(context)?.email ==
         "lauren.elliott@seoulforeign.org"||FirebaseAuthUtil.currentUser(context)?.email == "angie.won@seoulforeign.org";
   }
+  static bool isPublic(BuildContext context) {
+    return FirebaseAuthUtil.currentUser(context)?.email ==
+        "tempuser@seoulforeign.org";
+  }
 }

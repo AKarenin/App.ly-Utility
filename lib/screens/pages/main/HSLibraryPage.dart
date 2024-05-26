@@ -4,8 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icon.dart';
 import 'package:schoolappfinal/dbs/PeriodRepository.dart';
-import 'package:schoolappfinal/dbs/ReserveInfoRepository.dart';
+import 'package:schoolappfinal/dbs/ReservedInfoRepository.dart';
 import 'package:schoolappfinal/model/Period.dart';
+import 'package:schoolappfinal/model/ReservedInfo.dart';
 import 'package:schoolappfinal/model/Room.dart';
 import 'package:schoolappfinal/screens/widgets/ChoosePeriodWidget.dart';
 import 'package:schoolappfinal/screens/widgets/MyAlertDialog.dart';
@@ -13,7 +14,7 @@ import 'package:schoolappfinal/services/ReservationService.dart';
 import 'package:schoolappfinal/util/FirebaseAuthUtil.dart';
 import 'package:schoolappfinal/util/InteractionUtil.dart';
 
-import '../../../model/ReserveInfo.dart';
+import '../../../model/ReservedInfo.dart';
 import '../../../util/MonitorUtil.dart';
 
 //[O] 1. 방을 설계. (class)
@@ -32,7 +33,7 @@ class HSLibraryPage extends StatefulWidget {
 
 class _HSLibraryPageState extends State<HSLibraryPage> {
   late List<Period> periodList;
-  Map<String, ReserveInfo> reserveInfoByRoomId = {};
+  Map<String, ReservedInfo> reserveInfoByRoomId = {};
   Period? selectedPeriod;
 
   DateTime today = DateTime.now();
@@ -40,7 +41,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
   bool canReserve = true;
   bool isLoaded = false;
 
-  StreamSubscription<QuerySnapshot<ReserveInfo>>? subscription;
+  StreamSubscription<QuerySnapshot<ReservedInfo>>? subscription;
 
   //페이지 시작할때 실행하는 함수.
   @override
@@ -48,20 +49,20 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await loadPeriodAndCurrentReserveInfo();
+      await loadPeriodAndCurrentReservedInfo();
       selectedPeriod = periodList[0];
       setState(() {});
 
       if (FirebaseAuthUtil.isAdmin(context)) {
-        widget.monitorUtil?.run(periodList, loadPeriodAndCurrentReserveInfo);
+        widget.monitorUtil?.run(periodList, loadPeriodAndCurrentReservedInfo);
       }
 
       //구독할게(파이어스토어한테, 나 서버의 변경사항에 관심 있어.)
-      final query = ReserveInfoRepository.where('roomDate', isEqualTo: DateUtils.dateOnly(DateTime.now()).toIso8601String());
+      final query = ReservedInfoRepository.where('roomDate', isEqualTo: DateUtils.dateOnly(DateTime.now()).toIso8601String());
       // final snapshot = await query.get();
       // final reserveInfoList = snapshot.docs.map((e) => e.data()).toList();
       // print('reserveInfoList : $reserveInfoList');
-      subscription = await ReserveInfoRepository.queryListen(query, (event) {
+      subscription = await ReservedInfoRepository.queryListen(query, (event) {
         for(final documentChange in event.docChanges) {
           final reserveInfo = documentChange.doc.data();
           if(reserveInfo == null) continue;
@@ -88,8 +89,6 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     //구독해제할게(나 서버에 관심 없어.)
     subscription?.cancel();
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -120,6 +119,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     );
   }
 
+  ///ui
   Widget backgroundWidget() {
     return Container(
       color: Colors.white,
@@ -127,7 +127,6 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       height: double.infinity,
     );
   }
-
   Widget foregroundWidget(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
@@ -147,7 +146,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
             ChoosePeriodWidget(selectedPeriod!, periodList,
                 onChangePeriod: (period) async {
               selectedPeriod = period;
-              await loadPeriodAndCurrentReserveInfo();
+              await loadPeriodAndCurrentReservedInfo();
             }),
           Expanded(
             child: SizedBox(
@@ -159,7 +158,6 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       ),
     );
   }
-
   Widget myCard(BuildContext context) {
     return Card(
       margin: const EdgeInsets.all(50),
@@ -176,8 +174,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
 
             final reserveInfo = reserveInfoByRoomId[room.id];
 
-            final status = reserveInfo?.returnUserStatus(FirebaseAuthUtil.currentUser(context)?.email??"");
-            print('status: ${status}');
+            final status = reserveInfo?.reserveStatus;
             return Card(
               elevation: 10,
               child: ListTile(
@@ -191,7 +188,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
                 },
                 onLongPress: () {
                   if (FirebaseAuthUtil.isAdmin(context)) {
-                    showClosedDialog(reserveInfo, room);
+                    showAdminLongDialog(reserveInfo, room);
                   }
                 },
                 //bool ? value(when true) : value(when false)
@@ -210,8 +207,8 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
                     height: 50,
                     width: 30,
                     color: FirebaseAuthUtil.isAdmin(context)
-                        ? adminColorByReserveInfo(reserveInfo)
-                        : regularColorByReserveStatus(status)),
+                        ? adminColorByReservedInfo(reserveInfo)
+                        : regularColorByReservedInfo(reserveInfo)),
               ),
             );
           },
@@ -220,7 +217,8 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     );
   }
 
-  Future<void> loadPeriodAndCurrentReserveInfo() async {
+  ///load
+  Future<void> loadPeriodAndCurrentReservedInfo() async {
     isLoaded = false;
     setState(() {});
 
@@ -230,7 +228,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     }
 
     reserveInfoByRoomId =
-        await ReservationService.me.getReserveInfosByPeriod(selectedPeriod);
+    await ReservationService.me.getReserveInfosByPeriod(selectedPeriod);
 
     canReserve = true;
     for (final reserveInfo in reserveInfoByRoomId.values) {
@@ -244,58 +242,271 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     setState(() {});
   }
 
-  Color regularColorByReserveStatus(ReserveStatus? reserveStatus) {
-    if (reserveStatus == ReserveStatus.CLOSED) {
-      return Colors.white;
-    }
-    if (reserveStatus == null) {
-      return Colors.blue;
-    }
-    if (reserveStatus == ReserveStatus.REQUEST) {
-      return Colors.yellow;
-    }
-    if (reserveStatus == ReserveStatus.VERIFIED) {
-      return Colors.green;
-    }
+  ///admin
+  void setClosedByAdmin(ReservedInfo? reserveInfo, bool isClosed) async {
+    if (reserveInfo == null) return;
 
-    return Colors.red;
+    isLoaded = false;
+    setState(() {});
+
+    reserveInfo.reserveStatus = ReserveStatus.CLOSED;
+    await ReservedInfoRepository.update(reserveInfo);
+
+    isLoaded = true;
+    setState(() {});
+
+    loadPeriodAndCurrentReservedInfo();
+    //예약 상태 (색)
+    //안했다. !room.isReserved
+    //안했다. !room.isReserved
+    //했다.room.isReserved && 누구누구가 했다, 내가 했다
+
+    //일단 예약 이미 되었는지 확인
+
+    //안되었으면,
+  }
+  void setVerified(ReservedInfo reserveInfo)async{
+
+    isLoaded = false;
+    setState(() {});
+
+    reserveInfo.reserveStatus = ReserveStatus.VERIFIED;
+    await ReservedInfoRepository.update(reserveInfo);
+
+    isLoaded = true;
+    setState(() {});
+
+    loadPeriodAndCurrentReservedInfo();
+    //예약 상태 (색)
+    //안했다. !room.isReserved
+    //안했다. !room.isReserved
+    //했다.room.isReserved && 누구누구가 했다, 내가 했다
+
+    //일단 예약 이미 되었는지 확인
+
+    //안되었으면,
+  }
+  Future<ReservedInfo> setRequest(String email, Room room) async{
+    isLoaded = false;
+    setState(() {});
+    final reserveInfo = ReservedInfo(
+      roomId:room.id,
+      reservedEmail:email,
+      periodIndex: selectedPeriod!.index,
+      reservedTime: today,
+      reserveStatus: ReserveStatus.REQUEST,
+      roomDate: DateTime.now(),
+    );
+    await ReservedInfoRepository.create(reserveInfo);
+
+    isLoaded = true;
+    setState(() {});
+
+    loadPeriodAndCurrentReservedInfo();
+    return reserveInfo;
+
+    //예약 상태 (색)
+    //안했다. !room.isReserved
+    //했다.room.isReserved && 누구누구가 했다, 내가 했다
+
+    //일단 예약 이미 되었는지 확인
+
+    //안되었으면,
+  }
+  Future<void> deleteReservation(ReservedInfo reserveInfo) async {
+    await ReservedInfoRepository.delete(documentId: reserveInfo.documentId!);
+    await loadPeriodAndCurrentReservedInfo();
   }
 
-  Color adminColorByReserveInfo(ReserveInfo? reserveInfo) {
-    if (reserveInfo == null) {
+  ///color
+  Color regularColorByReservedInfo(ReservedInfo? reserveInfo) {
+    bool isMe = reserveInfo?.reservedEmail == FirebaseAuthUtil.currentUser(context)?.email;
+    if(reserveInfo?.reserveStatus == ReserveStatus.VACANT){
       return Colors.blue;
     }
-
-    if (reserveInfo.isClosed == true) {
+    if(reserveInfo?.reserveStatus == ReserveStatus.REQUEST){
+      return isMe?Colors.yellow:Colors.red;
+    }
+    if(reserveInfo?.reserveStatus == ReserveStatus.VERIFIED){
+      return isMe?Colors.green:Colors.red;
+    }
+    if(reserveInfo?.reserveStatus == ReserveStatus.ELAPSED){
+      return isMe?Colors.yellow:Colors.pink;
+    }
+    if(reserveInfo?.reserveStatus == ReserveStatus.CLOSED){
       return Colors.white;
     }
-
-    if (reserveInfo.isReserved) {
-      if (reserveInfo.isVerified) {
-        return Colors.green;
-      }
+    return Colors.blue;
+  }
+  Color publicColorByReservedInfo(ReservedInfo? reserveInfo) {
+    if(reserveInfo?.reserveStatus == ReserveStatus.VACANT){
+      return Colors.blue;
+    }
+    if(reserveInfo?.reserveStatus == ReserveStatus.REQUEST){
+      return Colors.red;
+    }
+    if(reserveInfo?.reserveStatus == ReserveStatus.VERIFIED){
       return Colors.red;
     }
 
+    if(reserveInfo?.reserveStatus == ReserveStatus.ELAPSED){
+      return Colors.blue;
+    }
+    if(reserveInfo?.reserveStatus == ReserveStatus.CLOSED){
+      return Colors.white;
+    }
+    return Colors.blue;
+  }
+  Color adminColorByReservedInfo(ReservedInfo? reserveInfo) {
+    // if (reserveInfo == null) {
+    //   return Colors.blue;
+    // }
+    //
+    // if (reserveInfo.isClosed == true) {
+    //   return Colors.white;
+    // }
+    //
+    // if (reserveInfo.isReserved) {
+    //   if (reserveInfo.isVerified) {
+    //     return Colors.green;
+    //   }
+    //   return Colors.red;
+    // }
+    //
+    // return Colors.blue;
+    if(reserveInfo?.reserveStatus == ReserveStatus.VACANT){
+      return Colors.blue;
+    }
+    if(reserveInfo?.reserveStatus == ReserveStatus.REQUEST){
+      return Colors.red;
+    }
+    if(reserveInfo?.reserveStatus == ReserveStatus.VERIFIED){
+      return Colors.green;
+    }
+    if(reserveInfo?.reserveStatus == ReserveStatus.ELAPSED){
+      return Colors.red;
+    }
+    if(reserveInfo?.reserveStatus == ReserveStatus.CLOSED){
+      return Colors.white;
+    }
     return Colors.blue;
   }
 
-  void showRegularUserDialog(
-    BuildContext context,
-    ReserveInfo? reserveInfo,
-    Room room,
-  ) {
-    ReserveStatus? status = reserveInfo?.returnUserStatus(FirebaseAuthUtil.currentUser(context)?.email??"");
+  ///dialog
+  void showAdminDialog(ReservedInfo? reserveInfo, Room room) {
+    //이미 검증 |노 예약 | 예약 but no 검증
+    if (reserveInfo?.reserveStatus == ReserveStatus.CLOSED) {
+      MyAlertDialog.show(context,
+          title: const Text("Do you want to unclose this room?"), okWork: () async {
+            setClosedByAdmin(reserveInfo, false);
+          });
+    } else if (reserveInfo?.reserveStatus == ReserveStatus.REQUEST || reserveInfo?.reserveStatus == ReserveStatus.ELAPSED) {
+      MyAlertDialog.show(context,
+          title: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("Reserver: ${reserveInfo!.reservedEmail}"),
+              const Text("Is the reserver present?")
+            ],
+          ), okWork: () async {
+            setVerified(reserveInfo);
+          });
+    } else if (reserveInfo?.reserveStatus == ReserveStatus.VERIFIED) {
+      MyAlertDialog.show(context,
+          title: const Text("Do you want to unreserve this room?"),
+          okWork: () async {
+            deleteReservation(reserveInfo!);
+          });
+    } else {
+      InteractionUtil.showSnackbar(context, "There is no reserver");
+    }
+  }
+  void showAdminLongDialog(ReservedInfo? reserveInfo, Room room) {
+    MyAlertDialog.show(context, title: const Text("Close this room?"),
+        okWork: () async {
+          if (reserveInfo == null) {
+            reserveInfo = ReservedInfo(
+              roomId: room.id,
+              reservedEmail: FirebaseAuthUtil.currentUser(context)?.email,
+              periodIndex: selectedPeriod!.index,
+              roomDate: today,
+              reservedTime: DateTime.now(),
+              reserveStatus: ReserveStatus.CLOSED,
+            );
+            await ReservedInfoRepository.create(reserveInfo!);
+            return;
+          }
 
-    //액션별로 생각하보기
-    //예약 (예약한적이 없고, VACANT일때
-    //예약취소 ( Request일때)
+          setClosedByAdmin(reserveInfo, true);
+        });
+  }
+  void showPublicDialog(ReservedInfo? reserveInfo, Room room) {
+    //ELAPSED, //예약요청됨+5분지남
+    //CANCEL_TRY, //예약취소요청됨
+    //이미 검증 |노 예약 | 예약 but no 검증
+    if (reserveInfo?.reserveStatus == ReserveStatus.CLOSED) {
+      InteractionUtil.showSnackbar(context, "This room is closed");
+    } else if (reserveInfo?.reserveStatus == ReserveStatus.REQUEST) {
+      MyAlertDialog.show(context,
+          title: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("Reserver: ${reserveInfo!.reservedEmail}"),
+              const Text("Are you the reserver?")
+            ],
+          ), okWork: () async {
+            setVerified(reserveInfo);
+          });
+    } else if (reserveInfo?.reserveStatus == ReserveStatus.VERIFIED) {
+      MyAlertDialog.show(context,
+          title: const Text("Do you want to unbook this room?"),
+          okWork: () async {
+            deleteReservation(reserveInfo!);
+          });
+    } else if (reserveInfo == null || reserveInfo.reserveStatus == ReserveStatus.VACANT || reserveInfo.reserveStatus == ReserveStatus.ELAPSED){
+      final emailController = TextEditingController();
+      MyAlertDialog.show(context,
+          title: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Name of Reserver"),
+              Row(
+                children: [
+                  Expanded(child: TextField(controller: emailController,)),
+                  const Text("@seoulforeign.org")
+                ],
+              ),
+            ],
+          ), okWork: () async {
+            final reserveInfo = await setRequest(emailController.text+"@seoulforeign.org", room);
+            setVerified(reserveInfo);
+          });
+    }
+  }
+  void showRegularUserDialog(
+      BuildContext context,
+      ReservedInfo? reserveInfo,
+      Room room,
+      ) {
+    ReserveStatus? status = reserveInfo?.reserveStatus;
+
+    String currentEmail = FirebaseAuthUtil.currentUser(context)?.email??'';
+
     if (status == ReserveStatus.CLOSED) {
       InteractionUtil.showSnackbar(context, "This room is  closed");
-      return;
     }
-
-    if (canReserve && status == null) {
+    else if(status == ReserveStatus.VERIFIED) {
+      if(reserveInfo!.reservedEmail == currentEmail)
+        MyAlertDialog.show(context,
+            title: const Text("Do you want to unbook this room?"),
+            okWork: () async {
+              deleteReservation(reserveInfo);
+            });
+      else{
+        InteractionUtil.showSnackbar(context, "This room is already booked");
+      }
+    }
+    else if (status == null || status == ReserveStatus.VACANT) {
       final now = DateTime.now();
       //해당 방에 점유 시작 시간. - 5분. => 기준 시간
       //기준 시간을 현재시간이 넘었니?
@@ -306,7 +517,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
         second: 0,
       );
       final standardDateTime =
-          startDateTime.subtract(const Duration(minutes: 5));
+      startDateTime.subtract(const Duration(minutes: 5));
       if (!standardDateTime.isBefore(now)) {
         InteractionUtil.showSnackbar(
             context, "Please wait until 5 minutes before the period to book.");
@@ -316,127 +527,20 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       MyAlertDialog.show(context,
           title: const Text("Do you want to book this room?"),
           okWork: () async {
-        isLoaded = false;
-        setState(() {});
-
-        await ReserveInfoRepository.create(ReserveInfo(
-          room.id,
-          FirebaseAuthUtil.currentUser(context)?.email,
-          selectedPeriod!.index,
-          true,
-          today,
-          false,
-          DateTime.now(),
-        ));
-
-        isLoaded = true;
-        setState(() {});
-
-        loadPeriodAndCurrentReserveInfo();
-
-        //예약 상태 (색)
-        //안했다. !room.isReserved
-        //했다.room.isReserved && 누구누구가 했다, 내가 했다
-
-        //일단 예약 이미 되었는지 확인
-
-        //안되었으면,
-      });
-    } else if (status == ReserveStatus.REQUEST) {
-      MyAlertDialog.show(context,
-          title: const Text("Do you want to unbook this room?"),
-          okWork: () async {
-        await ReserveInfoRepository.delete(documentId: reserveInfo!.documentId);
-        await loadPeriodAndCurrentReserveInfo();
-      });
-    } else {
-      InteractionUtil.showSnackbar(context, "You can not perform this action");
-      print(canReserve);
-      print(status);
-    }
-  }
-
-  void showAdminDialog(ReserveInfo? reserveInfo, Room room) {
-    //이미 검증 |노 예약 | 예약 but no 검증
-    if (reserveInfo?.isClosed == true) {
-      MyAlertDialog.show(context,
-          title: Text("Do you want to unclose this room?"), okWork: () async {
-        setClosed(reserveInfo, false);
-      });
-    } else if ((reserveInfo?.isReserved ?? false) && !reserveInfo!.isVerified) {
-      MyAlertDialog.show(context,
-          title: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Reserver: ${reserveInfo!.reservedEmail}"),
-              const Text("Is the reserver present?")
-            ],
-          ), okWork: () async {
-        isLoaded = false;
-        setState(() {});
-
-        reserveInfo.isVerified = true;
-        await ReserveInfoRepository.update(reserveInfo);
-
-        isLoaded = true;
-        setState(() {});
-
-        loadPeriodAndCurrentReserveInfo();
-        //예약 상태 (색)
-        //안했다. !room.isReserved
-        //안했다. !room.isReserved
-        //했다.room.isReserved && 누구누구가 했다, 내가 했다
-
-        //일단 예약 이미 되었는지 확인
-
-        //안되었으면,
-      });
-    } else if (reserveInfo?.isVerified ?? false) {
-      InteractionUtil.showSnackbar(context, "The reserver is already verified");
-    } else {
-      InteractionUtil.showSnackbar(context, "There is no reserver");
-    }
-  }
-
-  void showClosedDialog(ReserveInfo? reserveInfo, Room room) {
-    MyAlertDialog.show(context, title: const Text("Close this room?"),
-        okWork: () async {
-      if (reserveInfo == null) {
-        reserveInfo = ReserveInfo(
-          room.id,
-          FirebaseAuthUtil.currentUser(context)?.email,
-          selectedPeriod!.index,
-          false,
-          today,
-          false,
-          DateTime.now(),
-        );
-        await ReserveInfoRepository.create(reserveInfo!);
+            setRequest(currentEmail, room);
+          });
+    } else if (status == ReserveStatus.REQUEST || status == ReserveStatus.ELAPSED) {
+      if(reserveInfo!.reservedEmail == currentEmail) {
+        MyAlertDialog.show(context,
+            title: const Text("Do you want to unbook this room?"),
+            okWork: () async {
+              deleteReservation(reserveInfo);
+            });
       }
-      setClosed(reserveInfo, true);
-    });
+      else{
+        InteractionUtil.showSnackbar(context, "This room is already booked");
+      }
+    }
   }
 
-  void setClosed(ReserveInfo? reserveInfo, bool isClosed) async {
-    if (reserveInfo == null) return;
-
-    isLoaded = false;
-    setState(() {});
-
-    reserveInfo.isClosed = isClosed;
-    await ReserveInfoRepository.update(reserveInfo);
-
-    isLoaded = true;
-    setState(() {});
-
-    loadPeriodAndCurrentReserveInfo();
-    //예약 상태 (색)
-    //안했다. !room.isReserved
-    //안했다. !room.isReserved
-    //했다.room.isReserved && 누구누구가 했다, 내가 했다
-
-    //일단 예약 이미 되었는지 확인
-
-    //안되었으면,
-  }
 }

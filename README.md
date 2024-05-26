@@ -19,25 +19,14 @@ CocoaPods : 애플에서 라이브러리를 관리할 때 필요한 프로그램
 Gradle : 안드로이드에서 라이브러리를 관리할 때 필요한 프로그램
 Pub Dev : 다트에서 라이브러리를 관리할 때 필요한 프로그램# App.ly-Utility
 
-
-
+- freezed 파일 반영 명령어
+# model 생성 명령어
+flutter pub run build_runner watch --delete-conflicting-outputs
 
 //TODO
-- 유저가 자기가 verify되었는지 모른다 -> 알림이 필요 (예약했을때, 관리자가 지금 예약이 되었습니다를 승인하기 전에 노란색같은걸로 표시하면 좋겠다)
-- Period 5분전에만 예약할수 있게 해달라
-- 한국어 좀 영어로 고쳐달라
-
-예약 상태
-1.예약안함(파랑)/ isReserved:false, isVerified:false
-2.예약요청(노랑)/ isReserved: true, isVerified: false, reservedUser == currentUser
-3-1.예약승인됨(초록)/ isReserved: true, isVerified: true, reservedUser == currentUser
-3-2.이미예약됨(빨강)/ isReserved: true, isVerified: 상관없음, reservedUser != currentUser
-4. ㅇㅖ
-
-"isReserved": isReserved, //예약 요청
-"isVerified": isVerified, //예약 승인
-
------
-
-
-
+// 유즈케이스 다이어그램.
+- 유저의 종류 (+행위)
+  - 어드민 (FirebaseUtil.isAdminUser) - 예약승인, 예약취소, 방닫기
+  - 공동 유저 (FirebaseUtil.isPublicUser) - 예약요청, 공동유저만예약요청, 예약승인(일반 유저), 모니터안꺼짐
+  - 일반 유저 - 예약요청, 내예약취소
+- enum 변수 -> UserType userType;
