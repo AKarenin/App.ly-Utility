@@ -21,9 +21,10 @@ class PublicMonitorUtil {
     final cron = Cron();
     for (var period in periodList) {
       //Period 의 시작시간에 감시를 시작해서, 1분마다 아래 내용을 확인해라.
+      //분 시 일 월 요일
       final schedule = cron.schedule(
         Schedule.parse(
-            '0 */1 ${period.startTime.hour}-${period.startTime.hour + 1} * * 1-5'),
+            '*/1 ${period.startTime.hour}-${period.startTime.hour + 1} * * 1-5'),
         () async {
           print("Monitor");
 

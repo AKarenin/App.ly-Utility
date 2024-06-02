@@ -65,23 +65,24 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       // final reserveInfoList = snapshot.docs.map((e) => e.data()).toList();
       // print('reserveInfoList : $reserveInfoList');
       subscription = await ReservedInfoRepository.queryListen(query, (event) {
-        for(final documentChange in event.docChanges) {
-          final reserveInfo = documentChange.doc.data();
-          if(reserveInfo == null) continue;
-          if(selectedPeriod == null) continue;
-          if(reserveInfo.periodIndex!=selectedPeriod!.index) continue;
-
-          print('query');
-
-          final changeType = documentChange.type;
-          if(changeType==DocumentChangeType.added || changeType==DocumentChangeType.modified) {
-            reserveInfoByRoomId[reserveInfo.roomId] = reserveInfo;
-          }
-          else if(changeType==DocumentChangeType.removed) {
-            reserveInfoByRoomId.remove(reserveInfo.roomId);
-          }
-        }
-        setState(() { });
+        // for(final documentChange in event.docChanges) {
+        //   final reserveInfo = documentChange.doc.data();
+        //   if(reserveInfo == null) continue;
+        //   if(selectedPeriod == null) continue;
+        //   if(reserveInfo.periodIndex!=selectedPeriod!.index) continue;
+        //
+        //   print('query');
+        //
+        //   final changeType = documentChange.type;
+        //   if(changeType==DocumentChangeType.added || changeType==DocumentChangeType.modified) {
+        //     reserveInfoByRoomId[reserveInfo.roomId] = reserveInfo;
+        //   }
+        //   else if(changeType==DocumentChangeType.removed) {
+        //     reserveInfoByRoomId.remove(reserveInfo.roomId);
+        //   }
+        // }
+        // setState(() { });
+        loadPeriodAndCurrentReservedInfo();
       });
     });
   }
@@ -179,6 +180,14 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
             final reserveInfo = reserveInfoByRoomId[room.id];
 
             final status = reserveInfo?.reserveStatus;
+
+            var color = regularColorByReservedInfo(reserveInfo);
+            if(FirebaseAuthUtil.isAdmin(context)){
+              color = adminColorByReservedInfo(reserveInfo);
+            }else if(FirebaseAuthUtil.isPublic(context)){
+              color = publicColorByReservedInfo(reserveInfo);
+            }
+
             return Card(
               elevation: 10,
               child: ListTile(
@@ -186,7 +195,9 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
                   //예약정보를 파이어스토어에 저장해야함.
                   if (FirebaseAuthUtil.isAdmin(context)) {
                     showAdminDialog(reserveInfo, room);
-                  } else {
+                  } else if(FirebaseAuthUtil.isPublic(context)) {
+                    showPublicDialog(reserveInfo, room);
+                  }else {
                     showRegularUserDialog(context, reserveInfo, room);
                   }
                 },
@@ -210,9 +221,8 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
                 trailing: Container(
                     height: 50,
                     width: 30,
-                    color: FirebaseAuthUtil.isAdmin(context)
-                        ? adminColorByReservedInfo(reserveInfo)
-                        : regularColorByReservedInfo(reserveInfo)),
+                    color: color,
+                ),
               ),
             );
           },
@@ -294,18 +304,29 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
 
     //안되었으면,
   }
-  Future<ReservedInfo> setRequest(String email, Room room) async{
+  Future<ReservedInfo> setRequest(String email, Room room, ReservedInfo? reserveInfo) async{
     isLoaded = false;
     setState(() {});
-    final reserveInfo = ReservedInfo(
-      roomId:room.id,
-      reservedEmail:email,
-      periodIndex: selectedPeriod!.index,
-      reservedTime: today,
-      reserveStatus: ReserveStatus.REQUEST,
-      roomDate: DateUtils.dateOnly(DateTime.now())
-    );
-    await ReservedInfoRepository.create(reserveInfo);
+
+
+    if(reserveInfo == null){
+      reserveInfo = ReservedInfo(
+        roomId:room.id,
+        reservedEmail:email,
+        periodIndex: selectedPeriod!.index,
+        roomDate: DateUtils.dateOnly(DateTime.now()),
+        reserveStatus: ReserveStatus.REQUEST,
+        reservedTime: today,
+      );
+      await ReservedInfoRepository.create(reserveInfo);
+    }
+    else{
+      reserveInfo.reserveStatus = ReserveStatus.REQUEST;
+      reserveInfo.reservedEmail = email;
+      reserveInfo.reservedTime = today;
+      await ReservedInfoRepository.update(reserveInfo);
+    }
+
 
     isLoaded = true;
     setState(() {});
@@ -351,7 +372,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       return Colors.blue;
     }
     if(reserveInfo?.reserveStatus == ReserveStatus.REQUEST){
-      return Colors.red;
+      return Colors.yellow;
     }
     if(reserveInfo?.reserveStatus == ReserveStatus.VERIFIED){
       return Colors.red;
@@ -487,8 +508,8 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
               ),
             ],
           ), okWork: () async {
-            final reserveInfo = await setRequest(emailController.text+"@seoulforeign.org", room);
-            setVerified(reserveInfo);
+            final localReserveInfo = await setRequest(emailController.text+"@seoulforeign.org", room, reserveInfo);
+            setVerified(localReserveInfo);
           });
     }
   }
@@ -516,6 +537,11 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       }
     }
     else if (status == null || status == ReserveStatus.VACANT) {
+      if(!canReserve) {
+        InteractionUtil.showSnackbar(context, "You can not perform this action");
+        return;
+      }
+
       final now = DateTime.now();
       //해당 방에 점유 시작 시간. - 5분. => 기준 시간
       //기준 시간을 현재시간이 넘었니?
@@ -536,7 +562,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       MyAlertDialog.show(context,
           title: const Text("Do you want to book this room?"),
           okWork: () async {
-            setRequest(currentEmail, room);
+            setRequest(currentEmail, room, reserveInfo);
           });
     } else if (status == ReserveStatus.REQUEST || status == ReserveStatus.ELAPSED) {
       if(reserveInfo!.reservedEmail == currentEmail) {
