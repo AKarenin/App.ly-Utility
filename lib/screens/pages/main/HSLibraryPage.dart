@@ -51,7 +51,12 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await loadPeriodAndCurrentReservedInfo();
       selectedPeriod = periodList[0];
-      setState(() {});
+      try{
+        setState(() {});
+      }
+      catch(ignored){
+
+      }
 
       if (FirebaseAuthUtil.isPublic(context)) {
         widget.monitorUtil?.run(periodList, loadPeriodAndCurrentReservedInfo);
@@ -68,6 +73,8 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
           if(reserveInfo == null) continue;
           if(selectedPeriod == null) continue;
           if(reserveInfo.periodIndex!=selectedPeriod!.index) continue;
+
+          print('query');
 
           final changeType = documentChange.type;
           if(changeType==DocumentChangeType.added || changeType==DocumentChangeType.modified) {
@@ -226,6 +233,8 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       selectedPeriod = periodList[0];
     }
 
+    print('load');
+
     reserveInfoByRoomId =
     await ReservationService.me.getReserveInfosByPeriod(selectedPeriod);
 
@@ -238,9 +247,14 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     }
 
     isLoaded = true;
-    setState(() {});
+    try{
+      setState(() {});
+    }
+    catch(ignored){
+
+    }
   }
-  void setClosedByAdmin(ReservedInfo? reserveInfo, bool isClosed) async {
+  void setClosedByAdmin(ReservedInfo? reserveInfo) async {
     if (reserveInfo == null) return;
 
     isLoaded = false;
@@ -292,7 +306,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
       periodIndex: selectedPeriod!.index,
       reservedTime: today,
       reserveStatus: ReserveStatus.REQUEST,
-      roomDate: DateTime.now(),
+      roomDate: DateUtils.dateOnly(DateTime.now())
     );
     await ReservedInfoRepository.create(reserveInfo);
 
@@ -371,6 +385,8 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     // }
     //
     // return Colors.blue;
+    print('reserveInfo: ${reserveInfo}');
+    print('reserveInfoByRoomId: ${reserveInfoByRoomId}');
     if(reserveInfo?.reserveStatus == ReserveStatus.VACANT){
       return Colors.blue;
     }
@@ -395,7 +411,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
     if (reserveInfo?.reserveStatus == ReserveStatus.CLOSED) {
       MyAlertDialog.show(context,
           title: const Text("Do you want to unclose this room?"), okWork: () async {
-            setClosedByAdmin(reserveInfo, false);
+            deleteReservation(reserveInfo!);
           });
     } else if (reserveInfo?.reserveStatus == ReserveStatus.REQUEST || reserveInfo?.reserveStatus == ReserveStatus.ELAPSED) {
       MyAlertDialog.show(context,
@@ -426,15 +442,14 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
               roomId: room.id,
               reservedEmail: FirebaseAuthUtil.currentUser(context)?.email,
               periodIndex: selectedPeriod!.index,
-              roomDate: today,
+              roomDate: DateUtils.dateOnly(today),
               reservedTime: DateTime.now(),
               reserveStatus: ReserveStatus.CLOSED,
             );
             await ReservedInfoRepository.create(reserveInfo!);
-            return;
           }
 
-          setClosedByAdmin(reserveInfo, true);
+          setClosedByAdmin(reserveInfo);
         });
   }
   void showPublicDialog(ReservedInfo? reserveInfo, Room room) {

@@ -7,6 +7,7 @@ class ReservationService {
   static final ReservationService me = ReservationService();
 
   Future<Map<String, ReservedInfo>> getReserveInfosByPeriod(Period? selectedPeriod) async {
+    print('getReserve');
 
     DateTime today = DateTime.now();
     Map<String, ReservedInfo> reserveInfoByRoomId = {};
@@ -18,10 +19,12 @@ class ReservationService {
       ));
       final reserveInfo = reserveList.isNotEmpty ? reserveList[0] : null;
       if (reserveInfo != null) {
+        print('reserveInfo exist');
         reserveInfoByRoomId[room.id] = reserveInfo;
       }
     }
 
+    print('getReserve: reserveInfoByRoomId:${reserveInfoByRoomId}');
     return reserveInfoByRoomId;
   }
 
