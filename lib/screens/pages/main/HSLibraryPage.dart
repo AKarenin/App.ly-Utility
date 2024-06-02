@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:line_icons/line_icon.dart';
 import 'package:schoolappfinal/dbs/PeriodRepository.dart';
 import 'package:schoolappfinal/dbs/ReservedInfoRepository.dart';
 import 'package:schoolappfinal/model/Period.dart';
@@ -13,8 +12,6 @@ import 'package:schoolappfinal/screens/widgets/MyAlertDialog.dart';
 import 'package:schoolappfinal/services/ReservationService.dart';
 import 'package:schoolappfinal/util/FirebaseAuthUtil.dart';
 import 'package:schoolappfinal/util/InteractionUtil.dart';
-
-import '../../../model/ReservedInfo.dart';
 import '../../../util/PublicMonitorUtil.dart';
 
 //[O] 1. 방을 설계. (class)
