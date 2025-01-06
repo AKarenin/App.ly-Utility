@@ -489,7 +489,7 @@ class _HSLibraryPageState extends State<HSLibraryPage> {
           });
     } else if (reserveInfo?.reserveStatus == ReserveStatus.VERIFIED) {
       MyAlertDialog.show(context,
-          title: const Text("Do you want to unbook this room?"),
+          title: Text("Reserver: ${reserveInfo!.reservedEmail} Do you want to unbook this room?"),
           okWork: () async {
             deleteReservation(reserveInfo!);
           });

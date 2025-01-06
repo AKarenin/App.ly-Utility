@@ -119,7 +119,7 @@ class RegisterPage extends StatelessWidget {
                 },
                 child: Text("SIGN UP"),
                 style: ElevatedButton.styleFrom(
-                  primary: Color(0xFF001B44),
+                  backgroundColor: Color(0xFF001B44),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
