@@ -37,7 +37,7 @@ class PublicMonitorUtil {
             final reserveStatus = reserveInfo.reserveStatus;
 
             DateTime now = DateTime.now();
-            //예약한지 5분이 지났는지, 베리파이가 안됬는지
+            //예약한지 5분이 지났는지, verify가 안됬는지
             if (reserveInfo.reservedTime
                 .add(const Duration(minutes: 5))
                 .isBefore(now) && reserveStatus == ReserveStatus.REQUEST) {
@@ -49,7 +49,7 @@ class PublicMonitorUtil {
                 setState();
               } catch (ignored) {}
 
-              // 블랙리스트 저장소에 넣음.
+              // blacklist 저장소에 넣음.
               String blackEmail = reserveInfo.reservedEmail!;
               BlackUser blackUser = BlackUser(blackEmail, DateTime.now());
               BlackUserRepository.create(blackUser);
